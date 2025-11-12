@@ -49,6 +49,7 @@ Isto vai arrancar:
   Login: `guest` / `guest`
 
 - **Mongo Express (UI da base de dados):** http://localhost:8081
+  Login: `admin` / `admin`
 
 ### 3. Verificar os dados guardados
 
