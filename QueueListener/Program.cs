@@ -42,4 +42,4 @@ consumer.Received += (model, ea) =>
 channel.BasicConsume(queue: "jsonQueue", autoAck: true, consumer: consumer);
 
 Console.WriteLine("Press [enter] to exit.");
-Console.ReadLine();
+Thread.Sleep(Timeout.Infinite);
