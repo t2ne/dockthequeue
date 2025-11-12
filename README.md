@@ -24,10 +24,19 @@ High-level architecture:
 - RabbitMQ 3 (with Management UI)
 - MongoDB 7 + Mongo Express
 - Docker Compose for multi-service orchestration
-
 ## Prerequisites
 
 - Docker & Docker Compose
+- Git
+
+## Cloning the GitHub repo
+
+Clone the repository and change into the project root:
+
+```bash
+git clone https://github.com/t2ne/dockthequeue.git
+cd dockthequeue
+```
 
 ## Run the System (Docker Only)
 
