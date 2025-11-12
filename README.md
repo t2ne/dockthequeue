@@ -1,105 +1,106 @@
-# Projeto EQS — Integração RabbitMQ + MongoDB + API .NET
+# DockTheQueue — .NET API + RabbitMQ + MongoDB
 
-Este projeto demonstra uma integração simples entre .NET 9, RabbitMQ e MongoDB, utilizando Docker Compose para orquestrar todos os serviços.
+Academic project demonstrating a minimal integration between a .NET 9 API, a RabbitMQ message queue, and a MongoDB database. The entire system is orchestrated exclusively with Docker Compose.
 
-## Estrutura do Projeto
+**GitHub: [DockTheQueue](https://github.com/t2ne/dockthequeue)**
 
-eqs/
-│
-├── ApiRabbitMongo/         # API que recebe JSONs e envia para a fila RabbitMQ
-│   └── Program.cs
-│
-├── QueueListener/          # Serviço que lê mensagens da fila e guarda no MongoDB
-│   └── Program.cs
-│
-├── docker-compose.yml      # Define e liga todos os serviços (API, listener, RabbitMQ, MongoDB)
-│
-└── README.md               # Este manual
+## Overview
 
-## Iniciar o Projeto com Docker
+- The API exposes a single endpoint `POST /send` that accepts any valid JSON payload and publishes it to the RabbitMQ queue `jsonQueue`.
+- The `QueueListener` service consumes messages from `jsonQueue` and stores each JSON document in MongoDB database `ApiMessages`, collection `ReceivedJson`.
 
-### 1. Construir e arrancar todos os serviços
+High-level architecture:
 
-No diretório raiz (eqs/), executa:
+```
+[HTTP Client / Postman]
+          |
+          v
+[API (/send)] --> [RabbitMQ (jsonQueue)] --> [QueueListener] --> [MongoDB (ApiMessages.ReceivedJson)]
+```
+
+## Technology Stack
+
+- .NET 9 (Minimal API + console listener)
+- RabbitMQ 3 (with Management UI)
+- MongoDB 7 + Mongo Express
+- Docker Compose for multi-service orchestration
+
+## Prerequisites
+
+- Docker & Docker Compose
+
+## Run the System (Docker Only)
+
+From the project root (`eqs/`):
 
 ```bash
 docker compose up --build
 ```
 
-Isto vai arrancar:
-- MongoDB → Base de dados onde as mensagens são guardadas
-- Mongo Express → Interface web para visualizar a base de dados
-- RabbitMQ → Fila de mensagens
-- ApiRabbitMongo → API que envia JSONs para a fila
-- QueueListener → Serviço que consome mensagens e insere no MongoDB
+Services exposed:
 
-### 2. Aceder aos serviços
-
-- **API:** http://localhost:5076  
-  Endpoint: `POST /send`  
-  Exemplo de corpo JSON:
-  ```json
-  {
-      "name": "Utilizador Teste",
+- API: http://localhost:5076
+  - Endpoint: `POST /send`
+  - Sample payload:
+    ```json
+    {
+      "name": "Test User",
       "timestamp": "2025-11-11T20:00:00Z"
-  }
-  ```
+    }
+    ```
+- RabbitMQ UI: http://localhost:15672 (login: `guest` / `guest`)
+- Mongo Express: http://localhost:8081 (login: `admin` / `admin`)
 
-- **RabbitMQ Management UI:** http://localhost:15672  
-  Login: `guest` / `guest`
-
-- **Mongo Express (UI da base de dados):** http://localhost:8081
-  Login: `admin` / `admin`
-
-### 3. Verificar os dados guardados
-
-Na interface do **Mongo Express**, abre a base de dados `ApiMessages` e a coleção `ReceivedJson`.  
-Deverás ver o documento com os dados JSON enviados pela API.
-
-### 4. Parar e limpar tudo
-
-Para parar os serviços:
+To stop all containers:
 
 ```bash
 docker compose down
 ```
 
-Para remover todos os containers e imagens Docker (atenção — isto apaga tudo):
+MongoDB data persists in the named Docker volume `mongo_data`.
 
-```bash
-docker system prune -a
+## Ports
+
+Default exposed ports:
+
+- API: 5076
+- RabbitMQ: 5672 (AMQP) / 15672 (UI)
+- MongoDB: 27017
+- Mongo Express: 8081
+
+## Project Structure
+
+```
+eqs/
+├── ApiRabbitMongo/        # API that publishes received JSON to RabbitMQ
+│   ├── Program.cs
+│   └── Dockerfile
+├── QueueListener/         # Consumer that stores JSON documents in MongoDB
+│   ├── Program.cs
+│   └── Dockerfile
+├── docker-compose.yml     # Service orchestration
+└── README.md              # Documentation
 ```
 
-## Estrutura das Componentes
+## Processing Flow
 
-### ApiRabbitMongo (API)
-- Recebe pedidos `POST` em `/send`
-- Lê o corpo JSON
-- Publica a mensagem na fila RabbitMQ (`jsonQueue`)
+1. Client sends `POST /send` with a JSON body.
+2. API publishes the raw JSON string to RabbitMQ queue `jsonQueue`.
+3. `QueueListener` consumes messages and attempts `BsonDocument.Parse`.
+4. On success, the document is inserted into `ApiMessages.ReceivedJson` in MongoDB.
 
-### QueueListener (Consumidor)
-- Escuta mensagens na fila RabbitMQ
-- Insere os documentos recebidos na coleção `ReceivedJson` dentro da base `ApiMessages`
+## Troubleshooting
 
-## Requisitos
+| Issue                    | Possible Cause                       | Action                                                                                             |
+| ------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| API can't reach RabbitMQ | Startup race or wrong hostname       | Ensure container `rabbitmq` is healthy; check `RABBITMQ__HOSTNAME` env var in service definitions. |
+| No documents in MongoDB  | Listener not running or parse errors | Check logs of `queuelistener` container; verify JSON validity.                                     |
+| Port conflicts           | Existing local services              | Stop local RabbitMQ/Mongo or change published ports in `docker-compose.yml`.                       |
 
-- Docker e Docker Compose instalados
-- .NET 9 SDK (apenas se quiseres executar localmente sem Docker)
+## Author
 
-## Execução Local (sem Docker)
-
-1. Inicia manualmente o MongoDB e o RabbitMQ (por exemplo, através do Docker Desktop)
-2. Executa a API:
-   ```bash
-   cd ApiRabbitMongo
-   dotnet run
-   ```
-3. Noutro terminal, executa o consumidor:
-   ```bash
-   cd QueueListener
-   dotnet run
-   ```
+**- [t2ne](https://github.com/t2ne)**
 
 ---
 
-Projeto desenvolvido como exemplo educativo de integração entre mensageria e base de dados com .NET.
+Educational example of system integration using messaging and database persistence with .NET.
