@@ -5,7 +5,7 @@ using MongoDB.Driver;
 using System.Text;
 
 var mongoConn = Environment.GetEnvironmentVariable("MONGO_CONN_STR") ?? "mongodb://localhost:27017";
-var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
+var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ__HOSTNAME") ?? "localhost";
 
 var mongoClient = new MongoClient(mongoConn);
 var database = mongoClient.GetDatabase("ApiMessages");
@@ -25,7 +25,7 @@ consumer.Received += (model, ea) =>
     var body = ea.Body.ToArray();
     var message = Encoding.UTF8.GetString(body);
 
-    Console.WriteLine($"📩 Received message: {message}");
+    Console.WriteLine($"Received message: {message}");
 
     try
     {
