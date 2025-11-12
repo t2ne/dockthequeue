@@ -50,7 +50,7 @@ Services exposed:
 
 - API: http://localhost:5076
   - Endpoint: `POST /send`
-  - Sample payload:
+  - Sample payload (body - raw):
     ```json
     {
       "name": "Test User",
