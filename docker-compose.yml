@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    depends_on:
+      - mongo
+
+  apirabbitmongo:
+    build: ./ApiRabbitMongo
+    container_name: apirabbitmongo
+    ports:
+      - "5076:5076"
+    environment:
+      - ASPNETCORE_URLS=http://+:5076
+      - RABBITMQ__HOSTNAME=rabbitmq
+    depends_on:
+      - rabbitmq
+
+  queuelistener:
+    build: ./QueueListener
+    container_name: queuelistener
+    depends_on:
+      - rabbitmq
+      - mongo
+
+volumes:
+  mongo_data:

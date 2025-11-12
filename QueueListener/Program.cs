@@ -4,20 +4,20 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Text;
 
-// --- MongoDB setup ---
-var mongoClient = new MongoClient("mongodb://localhost:27017");
+var mongoConn = Environment.GetEnvironmentVariable("MONGO_CONN_STR") ?? "mongodb://localhost:27017";
+var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
+
+var mongoClient = new MongoClient(mongoConn);
 var database = mongoClient.GetDatabase("ApiMessages");
 var collection = database.GetCollection<BsonDocument>("ReceivedJson");
 
-// --- RabbitMQ setup ---
-var factory = new ConnectionFactory() { HostName = "localhost" };
+var factory = new ConnectionFactory() { HostName = rabbitHost };
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
-// Ensure queue exists
 channel.QueueDeclare(queue: "jsonQueue", durable: false, exclusive: false, autoDelete: false, arguments: null);
 
-Console.WriteLine("🟢 Listening for messages on 'jsonQueue'...");
+Console.WriteLine($"Listening for messages on 'jsonQueue' via RabbitMQ ({rabbitHost})...");
 
 var consumer = new EventingBasicConsumer(channel);
 consumer.Received += (model, ea) =>
@@ -31,11 +31,11 @@ consumer.Received += (model, ea) =>
     {
         var document = BsonDocument.Parse(message);
         collection.InsertOne(document);
-        Console.WriteLine("✅ Stored in MongoDB");
+        Console.WriteLine($"Stored in MongoDB ({mongoConn})");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Error storing in MongoDB: {ex.Message}");
+        Console.WriteLine($"Error storing in MongoDB: {ex.Message}");
     }
 };
 
