@@ -31,7 +31,7 @@ High-level architecture:
 
 ## Run the System (Docker Only)
 
-From the project root (`eqs/`):
+From the project root (`dockthequeue/`):
 
 ```bash
 docker compose up --build
@@ -71,7 +71,7 @@ Default exposed ports:
 ## Project Structure
 
 ```
-eqs/
+dockthequeue/
 ├── ApiRabbitMongo/        # API that publishes received JSON to RabbitMQ
 │   ├── Program.cs
 │   └── Dockerfile
